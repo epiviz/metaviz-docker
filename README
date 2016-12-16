@@ -28,3 +28,6 @@ example
     api          http://localhost:5000/api      python data provider
     db           http://localhost:7474          neo4j database
 
+
+### To update subtree
+`ui -> git subtree pull --prefix=metaviz_ui/ui http://github.com/epiviz/epiviz metaviz-4.1`
