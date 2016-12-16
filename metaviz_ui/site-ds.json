@@ -1,0 +1,1 @@
+[{"icicleAggregation": {"3": 2}, "url": "http://localhost:5000/api/", "metadata": [], "datasourceName": "test_data", "dataProvider": "epiviz.data.EpivizApiDataProvider", "icicleDepth": 3}]

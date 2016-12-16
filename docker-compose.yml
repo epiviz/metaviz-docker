@@ -1,0 +1,47 @@
+version: '2'
+
+services:
+    db:
+        image: neo4j:3.0
+        ports: 
+          -  "7474:7474"
+        volumes:
+          -  "./data:/data"
+        expose:
+          -  7474
+        environment: 
+            NEO4J_AUTH: neo4j/osdf1
+    bioc:
+        build: bioc_docker/.
+        depends_on:
+          - db
+        links:
+          - db
+        environment:
+            NEO4J_DB: db:7474
+            NEO4J_USER: "neo4j"
+            NEO4J_PASS: "osdf1" 
+    api:
+        restart: always
+        build: metaviz_dp/.
+        depends_on:
+          - db
+        ports:
+          -  "5000:80"
+        links:
+          - db
+        expose:
+          - 5000
+        environment: 
+            NEO4J_DB: db:7474
+            NEO4J_USER: "neo4j"
+            NEO4J_PASS: "osdf1" 
+    ui:
+        restart: always
+        build: metaviz_ui/.
+        links:
+          - db
+        depends_on:
+          - api
+        ports:
+          - "5500:80"

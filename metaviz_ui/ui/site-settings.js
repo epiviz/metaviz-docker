@@ -1,0 +1,1 @@
+epiviz.Config.SETTINGS.dataServerLocation = 'http://metaviz.cbcb.umd.edu/data/';epiviz.Config.SETTINGS.dataProviders = [['epiviz.data.EpivizApiDataProvider',"test_data","http://localhost:5000/api/",[],3,{'3': 2}]];epiviz.Config.SETTINGS.workspacesDataProvider = sprintf('epiviz.data.WebServerDataProvider,%s,%s','workspaces_provider','http://metaviz.cbcb.umd.edu/data/main.php');
