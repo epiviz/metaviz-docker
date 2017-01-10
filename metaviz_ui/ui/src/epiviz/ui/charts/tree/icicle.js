@@ -113,12 +113,18 @@ epiviz.ui.charts.tree.Icicle.prototype.draw = function(range, root) {
 
   var hoverOpacity = this.customSettingsValues()[epiviz.ui.charts.tree.IcicleType.CustomSettings.HOVER_OPACITY];
 
+  var aggLevel = this.customSettingsValues()[epiviz.ui.charts.tree.IcicleType.CustomSettings.AGG_LEVEL];
+  var nodeSel = this.customSettingsValues()[epiviz.ui.charts.tree.IcicleType.CustomSettings.NODE_SEL];
+
+  //self.visualization().setCustomSettingsValues(settingsValues);
 
   var Axis = epiviz.ui.charts.Axis;
 
   if (!root) {
     root = this._lastData;
   }
+
+  self._lastRoot = root;
 
   var width = this.width();
   var height = this.height();
@@ -127,7 +133,7 @@ epiviz.ui.charts.tree.Icicle.prototype.draw = function(range, root) {
   //this._yScale = d3.scale.pow().exponent(1.25).range([0, height - this.margins().sumAxis(Axis.Y)]);
   this._yScale = d3.scale.linear().range([0, height - this.margins().sumAxis(Axis.Y)]);
   
-  this._drawAxes();
+  this._drawAxes(root);
 
   var itemsGroup = this._svg.select('.items');
   var defs = this._svg.select('.defs');
@@ -385,7 +391,9 @@ epiviz.ui.charts.tree.Icicle.prototype.draw = function(range, root) {
       var node = self._getNewNode(d);
       node.selectionType = d.selectionType;
       node.selectionType = self.selectNode(node);
+      self._customSettingsValues["nodeSel"] = JSON.stringify(self._selectedNodes);
       d.selectionType = node.selectionType;
+      self._customSettingsChanged.notify(new epiviz.ui.charts.VisEventArgs(self._id, self._customSettingsValues));
       d3.event.stopPropagation();
     });
 
@@ -471,6 +479,12 @@ epiviz.ui.charts.tree.Icicle.prototype.draw = function(range, root) {
 
   this._drawRowControls(root);
 
+  if(this._firstRun == 0) {
+    this._firstRun++;
+    // this.selectLevel(this.selCutLevel);
+    this.firePropagateHierarchyChanges();
+  }
+
   return uiData;
 };
 
@@ -493,7 +507,9 @@ epiviz.ui.charts.tree.Icicle.prototype._updateLocation = function(start, width) 
                           width);
 };
 
-epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
+epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function(root) {
+
+  if(!root) {return;}
 
   this._legend.selectAll("*").remove();
 
@@ -513,9 +529,15 @@ epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
       var node_starts = [], node_ends = [];
       var node_starts_val = [], node_ends_val = [];
 
+      var move_level = parseInt(self.selCutLevel);
+
+      if(!(root.globalDepth <= move_level && (root.globalDepth + self._subtreeDepth - 1) >= move_level)) {
+          move_level = root.globalDepth + this._subtreeDepth - 1;
+      }
+
       this._uiData.forEach(function(uiNode) {
 
-        if( (uiNode.depth) == self.selCutLevel) {
+        if( (uiNode.globalDepth) == move_level) {
           if(  loc_start <= uiNode.start || (loc_start >= uiNode.start && loc_start < uiNode.end) ) {
             node_starts.push(uiNode.x);
             node_starts_val.push([uiNode.start, uiNode.end]);
@@ -536,7 +558,7 @@ epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
           var x1 = node_starts_val[0][0] - 1;
           var x2 = node_ends_val[node_ends_val.length-1][0];
           self._updateChartLocation(x1, x2 - x1);
-              self._drawAxes();
+              self._drawAxes(self._lastRoot);
         }        
       }
 
@@ -547,14 +569,14 @@ epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
             var x2 = node_starts_val[node_starts_val.length-1][1];
             // find the block right to the current position.
             self._updateChartLocation(x1, x2 - x1);
-                self._drawAxes();
+                self._drawAxes(self._lastRoot);
           }
           else if(node_ends_val.length > 0) {
               var x1 = node_ends_val[0][0];
               var x2 = node_ends_val[node_ends_val.length-1][1];
               // find the block right to the current position.
               self._updateChartLocation(x1, x2 - x1);
-                  self._drawAxes();
+                  self._drawAxes(self._lastRoot);
           }
         }
         else {
@@ -562,7 +584,7 @@ epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
           var x1 = node_ends_val[0][0];
           // find the block right to the current position.
           self._updateChartLocation(x1, x2 - x1);
-              self._drawAxes();
+              self._drawAxes(self._lastRoot);
         }
       }
 
@@ -574,7 +596,7 @@ epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
             var x2 = node_ends_val[node_ends_val.length-1][1] + 1;
             // find the block right to the current position.
             self._updateChartLocation(x1, x2 - x1);
-                self._drawAxes();
+                self._drawAxes(self._lastRoot);
         }
       }
 
@@ -976,7 +998,7 @@ epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
             range_end = uiNode.end;
           }
 
-          if( (uiNode.depth) == self.selCutLevel) {
+          if( (uiNode.depth) == move_level) {
 
             if(loc_x >= uiNode.x && loc_x < (uiNode.x + uiNode.dx)) {
               node_starts.push(uiNode.start);
@@ -1001,7 +1023,7 @@ epiviz.ui.charts.tree.Icicle.prototype._drawAxes = function() {
         }
 
         self._updateChartLocation(x1, x2 - x1);
-        self._drawAxes();
+        self._drawAxes(self._lastRoot);
 
       }
       }
@@ -1203,6 +1225,8 @@ epiviz.ui.charts.tree.Icicle.prototype._drawRowControls = function(root) {
     })
     .on('click', function(d, i) {
       self.selectLevel(root.globalDepth + i);
+      self._customSettingsValues["aggLevel"] = root.globalDepth + i;
+      self._customSettingsChanged.notify(new epiviz.ui.charts.VisEventArgs(self._id, self._customSettingsValues));
       d3.event.stopPropagation();
     });
 };

@@ -24,7 +24,7 @@ epiviz.ui.charts.tree.HierarchyVisualization = function(id, container, propertie
    * @type {Object.<string, epiviz.ui.charts.tree.NodeSelectionType>}
    * @private
    */
-  this._selectedNodes = {};
+  this._selectedNodes = JSON.parse(this._customSettingsValues["nodeSel"]) || {};
 
   /**
    * @type {Object.<number, number>}
@@ -122,7 +122,11 @@ epiviz.ui.charts.tree.HierarchyVisualization = function(id, container, propertie
    */
   this._levelsTaxonomy = null;
 
-  this.selCutLevel = 3;
+  this.selCutLevel = parseInt(this._customSettingsValues["aggLevel"]) || 3;
+
+  this._selectedLevels[this.selCutLevel] = 2;
+
+  this._firstRun = 0;
 };
 
 /**
@@ -240,7 +244,7 @@ epiviz.ui.charts.tree.HierarchyVisualization.prototype.draw = function(range, ro
       self._selectedLevels["3"] = 2;
     }
     else {
-      self.selCutLevel = Object.keys(self._selectedLevels)[0];
+      self.selCutLevel = parseInt(Object.keys(self._selectedLevels)[0]);
     }
 
     Object.keys(self._selectedLevels).forEach(function(sel) {
