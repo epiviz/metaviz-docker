@@ -2,6 +2,7 @@ import credential
 import requests as rqs
 import ujson
 import pandas
+import os
 
 """
 .. module:: utils
@@ -73,7 +74,8 @@ def cypher_call(query):
     headers = {'Content-Type': 'application/json'}
     data = {'statements': [{'statement': query, 'includeStats': False}]}
 
-    rq_res = rqs.post(url='http://localhost:7474/db/data/transaction/commit', headers=headers, data=ujson.dumps(data),
+    server = 'http://' + os.environ['NEO4J_DB'] + '/db/data/transaction/commit'
+    rq_res = rqs.post(url= server, headers=headers, data=ujson.dumps(data),
                   auth=(credential.neo4j_username, credential.neo4j_password))
     return rq_res
 
@@ -88,7 +90,8 @@ def check_neo4j():
         none
     """
     try:
-        rq_res = rqs.get(url='http://localhost:7474/db/data',
+        server = 'http://' + os.environ['NEO4J_DB'] + '/db/data'
+        rq_res = rqs.get(url= server,
                          auth=(credential.neo4j_username, credential.neo4j_password))
     except rqs.exceptions.ConnectionError as err:
         return False
