@@ -1,9 +1,9 @@
 from flask import Flask, jsonify, request, Response
 import ujson
-import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils
+import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest
 
-app = Flask(__name__)
-app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+application = Flask(__name__)
+application.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 """
 .. module:: metavizRoute
@@ -31,12 +31,13 @@ def add_cors_headers(response):
             response.headers['Access-Control-Allow-Headers'] = headers
     return response
 
-app.after_request(add_cors_headers)
+application.after_request(add_cors_headers)
 
 
 # Route for POST, OPTIONS, and GET requests
-@app.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
-@app.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
+@application.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
+#@application.route('/', methods = ['POST', 'OPTIONS', 'GET'])
 def process_api():
     """
     Send the request to the appropriate cypher query generation function.
@@ -103,6 +104,13 @@ def process_api():
         result = CombinedRequest.get_data(in_params_start, in_params_end, in_params_order, in_params_selection,
                                           in_params_selectedLevels, in_params_samples, in_datasource)
         errorStr = None
+         
+    elif in_params_method == "search":
+        in_param_datasource = request.values['params[datasource]']
+        in_param_searchQuery = request.values['params[q]']
+        in_param_maxResults = request.values['params[maxResults]']
+        result = SearchRequest.get_data(in_param_datasource, in_param_searchQuery, in_param_maxResults)
+        errorStr = None
 
     reqId = request.values['id']
     res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=200,
@@ -111,6 +119,9 @@ def process_api():
 
 if __name__ == '__main__':
     if(utils.check_neo4j()):
-        app.run(debug=True, host="0.0.0.0")
+        application.run(debug=True
+                       # use on AWS
+                       #  ,host="0.0.0.0"
+                       )
     else:
         print("Neo4j is not running")

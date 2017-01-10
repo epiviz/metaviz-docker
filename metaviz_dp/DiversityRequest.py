@@ -21,7 +21,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     Args:
         in_params_selectedLevels: Hierarchy level to compute Alpha Diversity
         in_params_samples: Samples to use for computing Alpha Diversity
-        in_datasource: namespace to query
+        in_datasource: datasource to query
     Returns:
         resRowsCols: Alpha diversity for the samples at the selected level
     """
@@ -29,12 +29,21 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
     tick_samples = in_params_samples.replace("\"", "\'")
     diversity_type = "shannon"
     # get the min selected Level if aggregated at multiple levels
-    minSelectedLevel = 6
+
+    qryStr = "MATCH (s:Sample)-[:COUNT]->(f:Feature {datasource: '" + in_datasource + "'}) RETURN f.depth as depth  LIMIT 1"
+
+    rq_res = utils.cypher_call(qryStr)
+    df = utils.process_result(rq_res)
+
+    minSelectedLevel = int(df['depth'].values[0])
+    if minSelectedLevel is None:
+        minSelectedLevel = 6
+
     for level in in_params_selectedLevels.keys():
         if in_params_selectedLevels[level] == 2 and int(level) < minSelectedLevel:
             minSelectedLevel = int(level)
 
-    qryStr = "MATCH (ns:Namespace {label: '" + in_datasource + "'})-[:NAMESPACE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:VALUE]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
+    qryStr = "MATCH (ds:Datasource {label: '" + in_datasource + "'})-[:DATASOURCE_OF]->(:Feature)-[:PARENT_OF*]->(f:Feature)-[:LEAF_OF]->()<-[v:COUNT]-(s:Sample) WHERE (f.depth=" + str(minSelectedLevel) + ") " \
         "AND s.id IN " + tick_samples + " with distinct f, s, SUM(v.val) as agg RETURN distinct agg, s.id, " \
         "f.label as label, f.leafIndex as index, f.end as end, f.start as start, f.id as id, f.lineage as lineage, " \
         "f.lineageLabel as lineageLabel, f.order as order"
