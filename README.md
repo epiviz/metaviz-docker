@@ -1,9 +1,14 @@
-### Requirements - 
+### Requirements
     Install docker, docker-engine and docker-compose (> 1.8)
 
 Metaviz.py is a python helper script to run docker containers.
 
-### Available commands
+
+### Password Change:
+It is recommended to change the default password used for setting up neo4j and other services in the docker compose.yml file.
+
+
+### Available commands:
 <command>           <description>                   <params>
 `build`         Build all containers                  None
 `serve`         Load all containers                   None
