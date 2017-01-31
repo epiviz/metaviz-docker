@@ -10,7 +10,7 @@ services:
         expose:
           -  7474
         environment: 
-            NEO4J_AUTH: neo4j/osdf1
+            NEO4J_AUTH: neo4j/metaviz_pass
     bioc:
         build: bioc_docker/.
         depends_on:
@@ -20,7 +20,7 @@ services:
         environment:
             NEO4J_DB: db:7474
             NEO4J_USER: "neo4j"
-            NEO4J_PASS: "osdf1" 
+            NEO4J_PASS: "metaviz_pass" 
     api:
         restart: always
         build: metaviz_dp/.
@@ -35,7 +35,7 @@ services:
         environment: 
             NEO4J_DB: db:7474
             NEO4J_USER: "neo4j"
-            NEO4J_PASS: "osdf1" 
+            NEO4J_PASS: "metaviz_pass" 
     ui:
         restart: always
         build: metaviz_ui/.
