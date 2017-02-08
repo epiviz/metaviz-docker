@@ -13,8 +13,7 @@ goog.require('epiviz.ui.charts.ChartFactory');
 goog.require('epiviz.ui.charts.ChartManager');
 goog.require('epiviz.workspaces.WorkspaceManager');
 goog.require('epiviz.datatypes.GenomicRange');
-goog.require('epiviz.ui.tutorials');
-goog.require('epiviz.ui.PrintManager');
+//goog.require('epiviz.ui.tutorials');
 
 /**
  * @param {epiviz.Config} config
@@ -754,8 +753,8 @@ epiviz.ui.ControlManager.prototype._initializeSearchBox = function() {
     select: function(event, ui) {
       var currentLocation = self._locationManager.lastUnfilledLocationChangeRequest() || self._locationManager.currentLocation();
       var seqName = ui.item.range.seqName();
-      var start = Math.round(ui.item.range.start());
-      var width = Math.round(ui.item.range.width());
+      var start = Math.round(ui.item.range.start() - ui.item.range.width() * 11);
+      var width = ui.item.range.width() * 22;
       self._updateSelectedLocation(new epiviz.datatypes.GenomicRange(seqName, start, width));
     },
     focus: function(event) {
