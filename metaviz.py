@@ -137,6 +137,9 @@ class MetavizParser(object):
             with open('metaviz_ui/ui/site-settings.js', 'w') as site_js:
                 site_js.write(settingsStr)
 
+	    with open('bioc_docker/db/dbname.txt', 'w') as neo_dbname:
+		neo_dbname.write(ds)
+
             subprocess.check_call(['docker-compose', 'build', '--no-cache', 'bioc'])
             subprocess.check_call(['docker-compose', 'up', '-d', 'bioc'])
             subprocess.check_call(['docker-compose', 'stop', 'ui'])
