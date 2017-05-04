@@ -1,8 +1,7 @@
 from flask import Flask, jsonify, request, Response
-from flask_caching import Cache
+from flask_cache import Cache
 import ujson
 import CombinedRequest, HierarchyRequest, MeasurementsRequest, PartitionsRequest, PCARequest, DiversityRequest, utils, SearchRequest
-
 application = Flask(__name__)
 cache = Cache(application, config={'CACHE_TYPE': 'simple'})
 application.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
@@ -35,10 +34,10 @@ def add_cors_headers(response):
 
 application.after_request(add_cors_headers)
 
+
 # Route for POST, OPTIONS, and GET requests
 @application.route('/api/', methods = ['POST', 'OPTIONS', 'GET'])
 @application.route('/api', methods = ['POST', 'OPTIONS', 'GET'])
-@application.route('/', methods = ['POST', 'OPTIONS', 'GET'])
 def process_api():
     """
     Send the request to the appropriate cypher query generation function.
@@ -69,7 +68,6 @@ def process_api():
         res = Response(response=ujson.dumps({"id": reqId, "error": errorStr, "result": result}), status=response_status,
                    mimetype="application/json")
         return res
-
 
     if(in_params_method == "hierarchy"):
         in_params_order = eval(request.values['params[order]'])
@@ -105,11 +103,13 @@ def process_api():
         in_params_samples = request.values['params[measurements]']
         result, errorStr, response_status = PCARequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
 
+
     elif in_params_method == "diversity":
         in_datasource = request.values['params[datasource]']
         in_params_selectedLevels = eval(request.values['params[selectedLevels]'])
         in_params_samples = request.values['params[measurements]']
         result, errorStr, response_status = DiversityRequest.get_data(in_params_selectedLevels, in_params_samples, in_datasource)
+
 
     elif in_params_method == "combined":
         in_datasource = request.values['params[datasource]']
@@ -136,4 +136,3 @@ def process_api():
 
 if __name__ == '__main__':
     application.run(debug=True)
-

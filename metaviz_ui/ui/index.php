@@ -10,7 +10,7 @@ $settings_file = (array_key_exists('settings', $_COOKIE)) ? $_COOKIE['settings']
 $curlopt_userpwd = '';
 
 // If the request does not contain a value for useCookie, default value will be true
-$useCookie = (array_key_exists('useCookie', $_REQUEST)) ? ($_REQUEST['useCookie'] === 'true' ? true : false) : true;
+$useCookie = (array_key_exists('useCookie', $_REQUEST)) ? ($_REQUEST['useCookie'] === 'true' ? true : false) : false;
 
 if(file_exists("token.txt")){
   $myfile = fopen("token.txt", "r");
@@ -192,7 +192,10 @@ if (array_key_exists('debug', $_GET) && $_GET['debug'] == 'true') {
     <link href="css/fa/css/font-awesome.css" rel="stylesheet"/>
     <!-- Icons -->
     <link href="css/icomoon/epiviz-icons.css" rel="stylesheet"/>
-
+    <!--Semantic-->
+    <link rel="stylesheet" href="src/epiviz/browser/semantic/dist/semantic.min.css">
+    <link rel="stylesheet" href="src/epiviz/browser/semantic-ui-range-master/range.css">
+    <link rel="stylesheet" href="src/epiviz/browser/browser.css">
     <!-- JQuery UI -->
     <link href="css/theme/jquery-ui-1.8.9.custom.css" rel="stylesheet"/>
     <link href="css/theme/jquery.ui.selectmenu.css" rel="stylesheet"/>
@@ -464,6 +467,13 @@ if (array_key_exists('debug', $_GET) && $_GET['debug'] == 'true') {
 
     <script src="src/epiviz/main.js"></script>
 
+    <script src="src/epiviz/browser/semantic/dist/semantic.js"></script>
+    <script src="src/epiviz/browser/semantic-ui-range-master/range.js"></script>
+    <script src="src/epiviz/browser/lodash/dist/lodash.min.js"></script>
+    <script src="src/epiviz/browser/actions.js"></script>
+    <script src="src/epiviz/browser/rendering.js"></script>
+    <script src="src/epiviz/browser/tablesort.js"></script>
+
     <!-- Dynamic initializations -->
 
     <script>
@@ -623,7 +633,7 @@ if (array_key_exists('debug', $_GET) && $_GET['debug'] == 'true') {
           <ul id="vis-menu"></ul>
         </div>
 
-        <button id="computed-measurements-button">Computed Measurements</button>
+        <button style="display:none;" id="computed-measurements-button">Computed Measurements</button>
 
         <span class="separator">|</span>
 

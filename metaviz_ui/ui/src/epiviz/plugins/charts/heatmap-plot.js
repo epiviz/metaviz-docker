@@ -92,13 +92,30 @@ epiviz.plugins.charts.HeatmapPlot.prototype.draw = function(range, data) {
 
   var cluster = this.customSettingsValues()[epiviz.plugins.charts.HeatmapPlotType.CustomSettings.CLUSTER];
 
-  var pair = this._applyClustering(range, data);
+  var logTransform = this.customSettingsValues()[epiviz.plugins.charts.HeatmapPlotType.CustomSettings.LOG_TRANSFORM];
 
-  /** @type {epiviz.datatypes.GenomicData} */
-  var orderedData = pair.data;
-  var colOrder = pair.columnOrder;
+  var self = this;
 
-  return this._drawCells(range, orderedData, colOrder);
+  if(logTransform) {
+    this._applyLogTransformation(data, function(transformed) {
+        var pair = self._applyClustering(range, transformed);
+
+        /** @type {epiviz.datatypes.GenomicData} */
+        var orderedData = pair.data;
+        var colOrder = pair.columnOrder;
+
+        return self._drawCells(range, orderedData, colOrder);
+    });
+  }
+  else {
+        var pair = self._applyClustering(range, data);
+
+        /** @type {epiviz.datatypes.GenomicData} */
+        var orderedData = pair.data;
+        var colOrder = pair.columnOrder;
+
+        return self._drawCells(range, orderedData, colOrder);
+  }
 };
 
 /**
@@ -373,8 +390,18 @@ epiviz.plugins.charts.HeatmapPlot.prototype._drawCells = function(range, data, c
   this._min = this.customSettingsValues()[epiviz.ui.charts.Visualization.CustomSettings.Y_MIN];
   this._max = this.customSettingsValues()[epiviz.ui.charts.Visualization.CustomSettings.Y_MAX];
   var CustomSetting = epiviz.ui.charts.CustomSetting;
-  if (this._min == CustomSetting.DEFAULT) { this._min = data.measurements()[0].minValue(); }
-  if (this._max == CustomSetting.DEFAULT) { this._max = data.measurements()[0].maxValue(); }
+
+  var dataMin = 100000, dataMax = -100000;
+  data.foreach(function(m, series) {
+    var featureValues = series._container.values(m);
+    var valData = featureValues._values;
+    var fMin = Math.min.apply(null, valData), fMax = Math.max.apply(null, valData);
+
+    if (fMin < dataMin) { dataMin = fMin;} 
+    if (fMax > dataMax) { dataMax = fMax;}
+  });
+  if (this._min == CustomSetting.DEFAULT) { this._min = dataMin; }
+  if (this._max == CustomSetting.DEFAULT) { this._max = dataMax; }
   if (this._globalIndexColorLabels) {
     colorLabelsMap = {};
     for (var j = firstGlobalIndex; j < lastGlobalIndex; ++j) {
@@ -851,4 +878,47 @@ epiviz.plugins.charts.HeatmapPlot.prototype._drawLabels = function(itemsGroup, c
  */
 epiviz.plugins.charts.HeatmapPlot.prototype.colorLabels = function() {
   return this._colorLabels;
+};
+
+epiviz.plugins.charts.HeatmapPlot.prototype._applyLogTransformation = function(lData, callback) {
+
+  var self = this;
+  var sumExp = new epiviz.datatypes.PartialSummarizedExperiment();
+  var counter = 0;
+
+  lData.foreach(function(measurement, series, seriesIndex) {
+    if(counter == 0) {
+      var rowData = series._container.rowData(measurement);
+      sumExp._rowData = rowData;
+      counter++;
+    }
+
+    var featureValues = series._container.values(measurement);
+    var valData = [];
+
+    if(featureValues._values != undefined) {
+      featureValues._values.forEach(function(val, i) {
+        valData[i] = Math.log2(val + 1); 
+      });
+    }
+    else {
+      valData = undefined;
+    }
+
+    var newValueData = new epiviz.datatypes.FeatureValueArray(measurement, featureValues._boundaries, featureValues._globalStartIndex, valData);
+
+    sumExp.addValues(newValueData);
+  });
+
+  var msDataMap = new epiviz.measurements.MeasurementHashtable();
+
+  lData.foreach(function(m) {
+    m._maxValue = Math.log2(m._maxValue + 1);
+    m._minValue = Math.log2(m._minValue + 1);
+    var msData = new epiviz.datatypes.MeasurementGenomicDataWrapper(m, sumExp);
+    msDataMap.put(m, msData);
+  });
+
+  var genomicData = new epiviz.datatypes.MapGenomicData(msDataMap);
+  callback(genomicData);
 };

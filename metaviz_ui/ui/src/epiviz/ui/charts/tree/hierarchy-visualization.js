@@ -122,6 +122,10 @@ epiviz.ui.charts.tree.HierarchyVisualization = function(id, container, propertie
    */
   this._levelsTaxonomy = null;
 
+  this._allLevels = null;
+
+  this._rootLineageLabel = null;
+
   this.selCutLevel = parseInt(this._customSettingsValues["aggLevel"]) || 3;
 
   this._selectedLevels[this.selCutLevel] = 2;
@@ -196,6 +200,9 @@ epiviz.ui.charts.tree.HierarchyVisualization.prototype.draw = function(range, ro
 
     this._oldSubtreeDepth = this._subtreeDepth;
     this._subtreeDepth = 0;
+
+    this._allLevels = root.rootTaxonomies;
+    this._rootLineageLabel = root.lineageLabel;
     
     // append new data to old data for hierarchy propogation
     if(this._oldUiDataMap == null) {

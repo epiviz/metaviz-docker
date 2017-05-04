@@ -192,7 +192,7 @@ epiviz.EpiViz.prototype._addChart = function(type, visConfigSelection, chartId, 
   chartId = this._chartManager.addChart(type, visConfigSelection, chartId, chartProperties);
   var self = this;
   // TODO: Maybe later implement hierarchical display type (see display-type.js for the start of the idea)
-  if (type.typeName() == 'epiviz.plugins.charts.CustomScatterPlot'){
+  if (type.typeName() == 'epiviz.plugins.charts.PCAScatterPlot'){
     var range = null;
     var chartMeasurementsMap = {};
     chartMeasurementsMap[chartId] = visConfigSelection.measurements;
@@ -213,7 +213,10 @@ epiviz.EpiViz.prototype._addChart = function(type, visConfigSelection, chartId, 
   else if (type.chartDisplayType() == epiviz.ui.charts.VisualizationType.DisplayType.DATA_STRUCTURE) {
     var chartVisConfigSelectionMap = {};
     chartVisConfigSelectionMap[chartId] = visConfigSelection;
-    var range = this._workspaceManager.activeWorkspace().range();
+    // var range = this._workspaceManager.activeWorkspace().range();
+    var seqInfo = this._locationManager._seqInfos[visConfigSelection.datasourceGroup] || this._locationManager._seqInfos["metavizr"];
+    var range = new epiviz.datatypes.GenomicRange(seqInfo.seqName, seqInfo.min, seqInfo.max);
+    this._locationManager.changeCurrentLocation(range);
     this._dataManager.getHierarchy(chartVisConfigSelectionMap,
       function(chartId, hierarchy) {
         self._chartManager.updateCharts(range, hierarchy, [chartId]);
@@ -951,7 +954,25 @@ epiviz.EpiViz.prototype._registerLocationChanged = function() {
       // TODO: update pca plots for Hierarchy Changes
       // remove PCA & alphadiversity here
       for ( var mea in chartMeasurementsMap) {
-          if (mea.indexOf('pca_scatter') != -1 || mea.indexOf('diversity_scatter') != -1) {
+
+          var cMap = {};
+          cMap[mea] = chartMeasurementsMap[mea];
+
+          if (mea.indexOf('pca_scatter') != -1) {
+
+            self._dataManager.getPCA(e.newValue, cMap,
+              function(chartId, data) {
+                self._chartManager.updateCharts(e.newValue, data, [chartId]);
+            });
+
+            delete chartMeasurementsMap[mea];
+          }
+          else if (mea.indexOf('diversity_scatter') != -1) {
+            self._dataManager.getDiversity(e.newValue, cMap,
+              function(chartId, data) {
+                self._chartManager.updateCharts(e.newValue, data, [chartId]);
+            });
+
             delete chartMeasurementsMap[mea];
           }
       } 
@@ -959,7 +980,7 @@ epiviz.EpiViz.prototype._registerLocationChanged = function() {
       self._dataManager.getData(e.newValue, chartMeasurementsMap,
         function(chartId, data) {
           self._chartManager.updateCharts(e.newValue, data, [chartId]);
-        });
+      });
 
       if(!self._chartManager.onChartPropogateIcicleLocationChanges().isFiring()) {
           self._chartManager.onChartIcicleLocationChanges().notify(new epiviz.ui.charts.VisEventArgs('1', {start: e.newValue._start, width: e.newValue._width}));

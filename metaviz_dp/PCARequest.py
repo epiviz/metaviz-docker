@@ -45,6 +45,7 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         response_status = 500
         return result, error, response_status
 
+
     minSelectedLevel = int(df['depth'].values[0])
     if minSelectedLevel is None:
         minSelectedLevel = 6
@@ -100,3 +101,4 @@ def get_data(in_params_selectedLevels, in_params_samples, in_datasource):
         response_status = 500
 
     return result, error, response_status
+

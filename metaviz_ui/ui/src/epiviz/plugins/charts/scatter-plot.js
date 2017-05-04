@@ -115,7 +115,18 @@ epiviz.plugins.charts.ScatterPlot.prototype.draw = function(range, data) {
   // If data is not defined, there is nothing to draw
   if (!data || !range) { return []; }
 
-  return this._drawCircles(range, data);
+  var logTransform = this.customSettingsValues()[epiviz.plugins.charts.ScatterPlotType.CustomSettings.LOG_TRANSFORM];
+
+  var self = this;
+
+  if(logTransform) {
+    this._applyLogTransformation(data, function(transformed) {
+      return self._drawCircles(range, transformed);
+    });
+  }
+  else {
+    return self._drawCircles(range, data);
+  }
 };
 
 /**
@@ -171,7 +182,7 @@ epiviz.plugins.charts.ScatterPlot.prototype._drawCircles = function(range, data)
     .range([height - margins.sumAxis(Axis.Y), 0]);
 
   this._clearAxes(this._chartContent);
-  this._drawAxes(xScale, yScale, 15, 15, this._chartContent);
+  this._drawAxes(xScale, yScale, 5, 5, this._chartContent);
 
   var i, index;
   var indices = []; //epiviz.utils.range(nSeries * nItems);
@@ -517,4 +528,42 @@ epiviz.plugins.charts.ScatterPlot.prototype._drawAxes = function(xScale, yScale,
       return self._globalIndexColorLabels ?
         "#ffffff" : self.colors().get(i);
     });
+};
+
+
+epiviz.plugins.charts.ScatterPlot.prototype._applyLogTransformation = function(lData, callback) {
+
+  var self = this;
+  var sumExp = new epiviz.datatypes.PartialSummarizedExperiment();
+  var counter = 0;
+
+  lData.foreach(function(measurement, series, seriesIndex) {
+    if(counter == 0) {
+      var rowData = series._container.rowData(measurement);
+      sumExp._rowData = rowData;
+      counter++;
+    }
+
+    var featureValues = series._container.values(measurement);
+    var valData = [];
+
+    featureValues._values.forEach(function(val, i) {
+      valData[i] = Math.log2(val + 1); 
+    });
+
+    var newValueData = new epiviz.datatypes.FeatureValueArray(measurement, featureValues._boundaries, featureValues._globalStartIndex, valData);
+    sumExp.addValues(newValueData);
+  });
+
+  var msDataMap = new epiviz.measurements.MeasurementHashtable();
+
+  lData.foreach(function(m) {
+    m._maxValue = Math.log2(m._maxValue + 1);
+    m._minValue = Math.log2(m._minValue + 1);
+    var msData = new epiviz.datatypes.MeasurementGenomicDataWrapper(m, sumExp);
+    msDataMap.put(m, msData);
+  });
+
+  var genomicData = new epiviz.datatypes.MapGenomicData(msDataMap);
+  callback(genomicData);
 };

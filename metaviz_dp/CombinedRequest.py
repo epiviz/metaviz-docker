@@ -137,4 +137,3 @@ def get_data(in_params_start, in_params_end, in_params_order, in_params_selectio
         response_status = 500
 
     return result, error, response_status
-
