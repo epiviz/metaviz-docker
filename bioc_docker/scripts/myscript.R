@@ -5,7 +5,7 @@
 # install metavizr dependencies
 # BiocInstaller::biocLite(c("metagenomeSeq", "biomformat", "epivizrStandalone"))
 
-BiocInstaller::biocLite(c("biomformat", "devtools", "readr", "epiviz/epivizr", "epiviz/metavizr"))
+BiocInstaller::biocLite(c("biomformat", "devtools", "readr", "metavizr"))
 
 # # since metavizr is not in bioconductor, install from github
 # install.packages("devtools")
